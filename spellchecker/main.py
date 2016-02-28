@@ -1,5 +1,5 @@
 import LevenshteinDistance as LD
-import re, pymongo
+import re, pymongo, operator
 
 class SpellChecker:
     def __init__(self):
@@ -57,7 +57,54 @@ class SpellChecker:
         return closestMatch
 
 
-    
+    def _rank(self, matches):
+        wordDet = {}
+        for match in matches:
+            for word in match['words']:
+                if match['graphDepth'] == 1:
+                    wordDet[word] = {
+                        'edits': match['edits']
+                    }
+                elif match['graphDepth'] == 2:
+                    previousEdit = wordDet[match['parent']]['edits']
+                    wordDet[word] = {
+                        'edits': match['edits'] + previousEdit
+                    }
+                else:
+                    previousEdit = wordDet[match['parent']]['edits']
+                    wordDet[word] = {
+                        'edits': match['edits'] + previousEdit
+                    }
+
+                freqRank =  self.db.dictionary.find_one({
+                    'word': word
+                },{
+                    'rank': True,
+                    '_id': False
+                })['rank']
+
+                wordDet[word]['depthScore'] = 3/float(match['graphDepth'])
+                wordDet[word]['freqProb'] = 1/float(freqRank)
+
+        rank = {}
+        for key in wordDet:
+            value = wordDet[key]
+            score = value['depthScore'] + value['freqProb']
+            if value['edits'] != 0:
+                score = score + 1/value['edits']
+            else:
+                score = score + 1000
+            rank[key] = score
+        rank = sorted(rank.items(), key=operator.itemgetter(1), reverse=True)
+
+        print "\n\nWord Detailed Score: "
+        for key in wordDet:
+            print key, ": ", wordDet[key]
+
+        print "\n\nRank List: "
+        for x in rank:
+            print x
+
 
 
     def train(self):
