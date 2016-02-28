@@ -3,7 +3,7 @@ import re, pymongo
 
 class SpellChecker:
     def __init__(self):
-        LD.compute('hello', 'start')
+        LD.compute('cook', 'books')
 
     def train(self):
         corpus = open('spellchecker/corpus.txt').read()
@@ -33,3 +33,6 @@ class SpellChecker:
                 print "[ERROR] Cannot insert " + data['word']
 
         print "[SUCCESS] Inserted " + str(counter) + " of " + str(len(corpus.split('\n')))
+
+    def correct(self, word):
+        
