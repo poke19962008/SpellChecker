@@ -1,3 +1,3 @@
 from spellchecker import SpellChecker
 
-SpellChecker()
+SpellChecker().correct('the')
