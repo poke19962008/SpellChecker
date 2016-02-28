@@ -39,7 +39,8 @@ class SpellChecker:
         closestMatch = []
         level = 1
 
-        parents = [{'word': wrongWord, 'minLD': None}]
+        parents = [{'word': wrongWord, 'edits': 0}]
+        exceptions = []
         while level < 3:
             frontier = []
             for parent in parents:
@@ -49,30 +50,36 @@ class SpellChecker:
                 if level != 1:
                     words = self.db.dictionary.find({
                         'word': {
-                                '$nin' : [ parent['word'] ]
+                                '$nin' : exceptions
                             }
                         }, {
                             '_id': False,
                             'word': True
-                    })[:10]
+                    })[:200]
                 else:
                     words = self.db.dictionary.find({}, {
                             '_id': False,
                             'word': True
-                    })[:10]
+                    })[:200]
 
                 for wordDic in words:
+
                     word = wordDic['word']
                     editDistance = LD.compute(parent['word'], word)
-
                     minLD = min(minLD, editDistance)
 
                     if(not matches.has_key(editDistance)):
                         matches[editDistance] = []
                     matches[editDistance].append(word)
-                    frontier.append({'word': word, 'minLD': None})
 
-                closestMatch.append({'words': matches[minLD], 'graphDepth': level, 'edits': minLD})
+                    frontier.append({'word': word, 'edits': editDistance})
+
+                closestMatch.append({'words': matches[minLD], 'graphDepth': level, 'edits': minLD + parent['edits'], 'parent': parent['word']})
+
+                [exceptions.append(x) for x in matches[minLD]]
+
             parents = frontier
             level = level + 1
-        print closestMatch
+
+        for foo in closestMatch:
+            print foo
