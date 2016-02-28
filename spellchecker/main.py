@@ -5,36 +5,12 @@ class SpellChecker:
     def __init__(self):
         try:
             con = pymongo.Connection(host="mongodb://localhost:27017/spellchecker", port=27017)
-            print "Connected to MongoDB"
         except:
             print "[ERROR] Cannot connect to MongoDB"
 
         self.db = con['spellchecker']
 
-    def train(self):
-        corpus = open('spellchecker/corpus.txt').read()
-
-        counter = 0
-        print "Started inserting in Mongo"
-        for row in corpus.split('\n'):
-            data = {}
-            row = row.split('\t')
-
-            data['rank'] = row[0]
-            data['word'] = re.sub(r"\s{3}", "", row[1]).lower()
-            data['frequency'] = row[3]
-            data['dispersion'] = row[4]
-
-            try:
-                self.db.dictionary.insert(data)
-                counter = counter + 1
-            except:
-                print "[ERROR] Cannot insert " + data['word']
-
-        print "[SUCCESS] Inserted " + str(counter) + " of " + str(len(corpus.split('\n')))
-
-
-    def correct(self, wrongWord):
+    def _genTree(self, wrongWord):
         closestMatch = []
         level = 1
 
@@ -78,6 +54,41 @@ class SpellChecker:
                         frontier.append({'word': x, 'edits': editDistance})
             parents = frontier
             level = level + 1
+        return closestMatch
 
-        for foo in closestMatch:
+
+    
+
+
+    def train(self):
+        corpus = open('spellchecker/corpus.txt').read()
+
+        counter = 0
+        print "Started inserting in Mongo"
+        for row in corpus.split('\n'):
+            data = {}
+            row = row.split('\t')
+
+            data['rank'] = row[0]
+            data['word'] = re.sub(r"\s{3}", "", row[1]).lower()
+            data['frequency'] = row[3]
+            data['dispersion'] = row[4]
+
+            try:
+                self.db.dictionary.insert(data)
+                counter = counter + 1
+            except:
+                print "[ERROR] Cannot insert " + data['word']
+
+        print "[SUCCESS] Inserted " + str(counter) + " of " + str(len(corpus.split('\n')))
+
+
+    def correct(self, wrongWord):
+
+        matches = self._genTree(wrongWord)
+
+        print "\nPossible Matches (BK-Tree): "
+        for foo in matches:
             print foo
+
+        self._rank(matches)
