@@ -38,15 +38,28 @@ class SpellChecker:
     def correct(self, wrongWord):
         closestMatch = []
         level = 1
-        words = self.db.dictionary.find({}, {'_id': False, 'word': True})[:10]
 
-        parents = [{'word': wrongWord, 'minLD': None}];
-
-        while level<3:
+        parents = [{'word': wrongWord, 'minLD': None}]
+        while level < 3:
             frontier = []
             for parent in parents:
                 minLD = 1000
                 matches = {}
+
+                if level != 1:
+                    words = self.db.dictionary.find({
+                        'word': {
+                                '$nin' : [ parent['word'] ]
+                            }
+                        }, {
+                            '_id': False,
+                            'word': True
+                    })[:10]
+                else:
+                    words = self.db.dictionary.find({}, {
+                            '_id': False,
+                            'word': True
+                    })[:10]
 
                 for wordDic in words:
                     word = wordDic['word']
@@ -59,6 +72,7 @@ class SpellChecker:
                     matches[editDistance].append(word)
                     frontier.append({'word': word, 'minLD': None})
 
-                closestMatch.append({'words': matches[minLD]})
+                closestMatch.append({'words': matches[minLD], 'graphDepth': level, 'edits': minLD})
             parents = frontier
             level = level + 1
+        print closestMatch
