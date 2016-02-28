@@ -11,8 +11,6 @@ class SpellChecker:
 
         self.db = con['spellchecker']
 
-        LD.compute('cook', 'books')
-
     def train(self):
         corpus = open('spellchecker/corpus.txt').read()
 
@@ -23,7 +21,7 @@ class SpellChecker:
             row = row.split('\t')
 
             data['rank'] = row[0]
-            data['word'] = re.sub(r"\s{3}", "", row[1])
+            data['word'] = re.sub(r"\s{3}", "", row[1]).lower()
             data['frequency'] = row[3]
             data['dispersion'] = row[4]
 
@@ -35,13 +33,14 @@ class SpellChecker:
 
         print "[SUCCESS] Inserted " + str(counter) + " of " + str(len(corpus.split('\n')))
 
+
     def correct(self, wrongWord):
         closestMatch = []
         level = 1
 
         parents = [{'word': wrongWord, 'edits': 0}]
         exceptions = []
-        while level < 3:
+        while level <= 3:
             frontier = []
             for parent in parents:
                 minLD = 1000
@@ -55,15 +54,14 @@ class SpellChecker:
                         }, {
                             '_id': False,
                             'word': True
-                    })[:200]
+                    })
                 else:
                     words = self.db.dictionary.find({}, {
                             '_id': False,
                             'word': True
-                    })[:200]
+                    })
 
                 for wordDic in words:
-
                     word = wordDic['word']
                     editDistance = LD.compute(parent['word'], word)
                     minLD = min(minLD, editDistance)
@@ -72,12 +70,12 @@ class SpellChecker:
                         matches[editDistance] = []
                     matches[editDistance].append(word)
 
-                    frontier.append({'word': word, 'edits': editDistance})
+                if minLD != 1000:
+                    closestMatch.append({'words': matches[minLD], 'graphDepth': level, 'edits': minLD, 'parent': parent['word']})
 
-                closestMatch.append({'words': matches[minLD], 'graphDepth': level, 'edits': minLD + parent['edits'], 'parent': parent['word']})
-
-                [exceptions.append(x) for x in matches[minLD]]
-
+                    for x in matches[minLD]:
+                        exceptions.append(x)
+                        frontier.append({'word': x, 'edits': editDistance})
             parents = frontier
             level = level + 1
 

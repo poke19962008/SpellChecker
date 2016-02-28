@@ -1,3 +1,4 @@
 from spellchecker import SpellChecker
 
-SpellChecker().correct('te')
+SpellChecker().correct('acvity')
+# SpellChecker().train()
