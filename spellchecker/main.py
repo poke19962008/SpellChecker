@@ -1,3 +1,5 @@
+__author__ = "SAYAN DAS"
+
 import LevenshteinDistance as LD
 import re, pymongo, operator
 
@@ -10,12 +12,17 @@ class SpellChecker:
 
         self.db = con['spellchecker']
 
+    '''
+        Generate BK-Tree with mispelled word as top node
+    '''
     def _genTree(self, wrongWord):
         closestMatch = []
         level = 1
 
         parents = [{'word': wrongWord, 'edits': 0}]
         exceptions = []
+
+        # Run till height=3
         while level <= 3:
             frontier = []
             for parent in parents:
@@ -38,6 +45,8 @@ class SpellChecker:
                     })
 
                 for wordDic in words:
+
+                    # Calcuate minimum edit distance of one Level
                     word = wordDic['word']
                     editDistance = LD.compute(parent['word'], word)
                     minLD = min(minLD, editDistance)
@@ -49,6 +58,7 @@ class SpellChecker:
                 if minLD != 1000:
                     closestMatch.append({'words': matches[minLD], 'graphDepth': level, 'edits': minLD, 'parent': parent['word']})
 
+                    # Add exception and frontiers with best matches
                     for x in matches[minLD]:
                         exceptions.append(x)
                         frontier.append({'word': x, 'edits': editDistance})
@@ -56,11 +66,15 @@ class SpellChecker:
             level = level + 1
         return closestMatch
 
-
+    '''
+        Assigns rank on the basis of graphDepth, frequency, edit distance
+    '''
     def _rank(self, matches):
         wordDet = {}
         for match in matches:
             for word in match['words']:
+
+                # Calculate total edits
                 if match['graphDepth'] == 1:
                     wordDet[word] = {
                         'edits': match['edits']
@@ -76,6 +90,7 @@ class SpellChecker:
                         'edits': match['edits'] + previousEdit
                     }
 
+                # Calculate frequency probability and depth score
                 freqRank =  self.db.dictionary.find_one({
                     'word': word
                 },{
@@ -101,12 +116,15 @@ class SpellChecker:
         for key in wordDet:
             print key, ": ", wordDet[key]
 
-        print "\n\nRank List: "
+        print "\n\nScore Card: "
         for x in rank:
             print x
 
+        return rank
 
-
+    '''
+        Insert docs in Mongo(NoSQL Database)
+    '''
     def train(self):
         corpus = open('spellchecker/corpus.txt').read()
 
@@ -129,9 +147,10 @@ class SpellChecker:
 
         print "[SUCCESS] Inserted " + str(counter) + " of " + str(len(corpus.split('\n')))
 
-
+    '''
+        Genrates Tree and creates rank list
+    '''
     def correct(self, wrongWord):
-
         matches = self._genTree(wrongWord)
 
         print "\nPossible Matches (BK-Tree): "

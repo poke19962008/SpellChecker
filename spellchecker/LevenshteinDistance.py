@@ -1,3 +1,9 @@
+__author__ = "SAYAN DAS"
+
+'''
+    Levenshtein Distance Algorithm - O(|x|.|y|)
+'''
+
 def getInitialState(lenStartW, lenEndW):
     dp = [[0 for x in range(lenStartW+1)] for x in range(lenEndW+1)]
     dp[0] = [x for x in range(lenStartW+1)]
@@ -17,6 +23,8 @@ def compute(start, end):
             if start[j-1] != end[i-1]:
                 replaceCost = 1
 
-            dp[i][j] = min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+replaceCost)
+            dp[i][j] = min( dp[i-1][j]+1, # Deletions
+                            dp[i][j-1]+1, # Insertion
+                            dp[i-1][j-1]+replaceCost) # Replacement
 
     return dp[lenEndW][lenStartW]
