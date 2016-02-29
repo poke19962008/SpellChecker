@@ -1,11 +1,16 @@
 # SpellChecker
-Simple Spell Checker for CS1135. Consist of 5000 words taken from [wordfrequency.info](http://www.wordfrequency.info/5k_lemmas_download.asp)
+Simple python2.7 based Spell Checker for CS1135. Consist of 5000 words taken from [wordfrequency.info](http://www.wordfrequency.info/5k_lemmas_download.asp)
 
 ## How to run
 ```
 $ python test.py
 ```
 
+## Resources
+
+- Word Corpus: [wordfrequency.info](http://www.wordfrequency.info/5k_lemmas_download.asp)
+- Edit Distance Calculation [Levenshtein Distance Algorithm](https://www.google.co.in/url?sa=t&rct=j&q=&esrc=s&source=web&cd=2&cad=rja&uact=8&ved=0ahUKEwisuuXqiJ3LAhVLG44KHYl9BnYQtwIIIjAB&url=http%3A%2F%2Fvideo.mit.edu%2Fwatch%2Fintroduction-to-algorithms-lecture-21-dynamic-programming-iii-parenthesization-edit-distance-k-14227%2F&usg=AFQjCNFigDbroMYJYifDYIwATQwcWkktJQ&sig2=FdBViIxkQSMzbDMUaaxCXg&bvm=bv.115339255,d.c2E)
+- Data Structure: [BK-Tree](https://en.wikipedia.org/wiki/BK-tree)
 
 ## License
 
