@@ -116,7 +116,7 @@ class SpellChecker:
         for key in wordDet:
             print key, ": ", wordDet[key]
 
-        print "\n\nScore Card: "
+        print "\n\nScore Card for %s : " % (self.wrongWord)
         counter = 5
         for x in rank:
             print x
@@ -156,6 +156,7 @@ class SpellChecker:
         Genrates Tree and creates rank list
     '''
     def correct(self, wrongWord):
+        self.wrongWord = wrongWord
         matches = self._genTree(wrongWord)
 
         print "\nPossible Matches (BK-Tree): "
