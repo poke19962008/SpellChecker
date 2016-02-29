@@ -71,6 +71,7 @@ class SpellChecker:
     '''
     def _rank(self, matches):
         wordDet = {}
+        rank = {}
         for match in matches:
             for word in match['words']:
 
@@ -101,15 +102,14 @@ class SpellChecker:
                 wordDet[word]['depthScore'] = 3/float(match['graphDepth'])
                 wordDet[word]['freqProb'] = 1/float(freqRank)
 
-        rank = {}
-        for key in wordDet:
-            value = wordDet[key]
-            score = value['depthScore'] + value['freqProb']
-            if value['edits'] != 0:
-                score = score + 1/value['edits']
-            else:
-                score = score + 1000
-            rank[key] = score
+                value = wordDet[word]
+                score = value['depthScore'] + value['freqProb']
+                if value['edits'] != 0:
+                    score = score + 1/value['edits']
+                else:
+                    score = score + 1000
+                rank[word] = score
+
         rank = sorted(rank.items(), key=operator.itemgetter(1), reverse=True)
 
         print "\n\nWord Detailed Score: "
@@ -117,8 +117,13 @@ class SpellChecker:
             print key, ": ", wordDet[key]
 
         print "\n\nScore Card: "
+        counter = 5
         for x in rank:
             print x
+            if counter == 0:
+                break
+            else:
+                counter = counter -1
 
         return rank
 
