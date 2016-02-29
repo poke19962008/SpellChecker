@@ -1,5 +1,5 @@
 # SpellChecker
-Simple python2.7 based Spell Checker for CS1135. Consist of 5000 words taken from [wordfrequency.info](http://www.wordfrequency.info/5k_lemmas_download.asp)
+Simple python2.7 based Spell Checker for CS1135. Consist of 5000 words along with thier ranking based on the frequency taken from [wordfrequency.info](http://www.wordfrequency.info/5k_lemmas_download.asp)
 
 ## How to run
 ```
