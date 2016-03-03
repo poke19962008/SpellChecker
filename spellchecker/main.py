@@ -131,12 +131,14 @@ class SpellChecker:
         Insert docs in Mongo(NoSQL Database)
     '''
     def train(self):
-        corpus = open('spellchecker/corpus.txt').read()
-
         counter = 0
-        print "Started inserting in Mongo"
+
+        print "Inserting words in dictionary"
+        corpus = open('spellchecker/corpus.txt').read()
+        dictionary = []
         for row in corpus.split('\n'):
             data = {}
+
             row = row.split('\t')
 
             data['rank'] = row[0]
@@ -144,13 +146,49 @@ class SpellChecker:
             data['frequency'] = row[3]
             data['dispersion'] = row[4]
 
+            dictionary.append(data)
             try:
                 self.db.dictionary.insert(data)
                 counter = counter + 1
             except:
                 print "[ERROR] Cannot insert " + data['word']
 
-        print "[SUCCESS] Inserted " + str(counter) + " of " + str(len(corpus.split('\n')))
+        print "[SUCCESS] Inserted " + str(counter) + "/5000 words in `dictionary` collection"
+
+        counter = 0
+        print "Generating Level-1 BK-Tree of each word."
+        for wordD in dictionary:
+            parent = wordD['word']
+            tmp = {}
+            minEdit = 1000
+            for wordD in dictionary:
+                value = wordD['word']
+
+                if value == parent:
+                    continue
+                ed = LD.compute(parent, value)
+                if not tmp.has_key(ed):
+                    tmp[ed] = {}
+                    tmp[ed]['words'] = []
+                tmp[ed]['words'].append(value)
+
+                minEdit = min(minEdit, ed)
+
+            tmp[minEdit]['edits'] = minEdit
+            data = {
+                'parent': parent,
+                'edits': minEdit,
+                'words': tmp[minEdit]['words']
+            }
+
+            try:
+                self.db.tree.insert(data)
+                counter = counter + 1
+                print "[SUCCESS] " + parent + " done with " + str(len(tmp[minEdit]['words'])) + " children"
+            except:
+                print "[ERROR] Cannot insert " + data['parent']
+
+        print "[SUCCESS] Inserted " + str(counter) + "/5000 words in `dictionary` collection"
 
     '''
         Genrates Tree and creates rank list
