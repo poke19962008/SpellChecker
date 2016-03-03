@@ -17,53 +17,52 @@ class SpellChecker:
     '''
     def _genTree(self, wrongWord):
         closestMatch = []
-        level = 1
 
-        parents = [{'word': wrongWord, 'edits': 0}]
-        exceptions = []
+        # Level 1:
+        words =  self.db.dictionary.find({}, {
+             '_id': False,
+             'word': True
+        })
 
-        # Run till height=3
-        while level <= 3:
-            frontier = []
-            for parent in parents:
-                minLD = 1000
-                matches = {}
+        minED = 1000
+        data = {}
+        for wordDict in words:
+            word = wordDict['word']
 
-                if level != 1:
-                    words = self.db.dictionary.find({
-                        'word': {
-                                '$nin' : exceptions
-                            }
-                        }, {
-                            '_id': False,
-                            'word': True
+            editDistance = LD.compute(wrongWord, word)
+            minED = min(minED, editDistance)
+
+            if not data.has_key(editDistance):
+                data[editDistance] = {}
+                data[editDistance]['word'] = []
+            data[editDistance]['word'].append(word)
+
+        parent = [{
+            'graphDepth': 1,
+            'parent': wrongWord,
+            'edits': minED,
+            'words': data[minED]['word']
+        }]
+        closestMatch = [parent[0]]
+        Level = 2
+        while Level <= 3:
+
+            for tuple_ in parent:
+                frontier = []
+                parent = tuple_['parent']
+                words = tuple_['words']
+                for word in words:
+                    match = self.db.tree.find_one({'parent': word})
+                    frontier.append({
+                        'graphDepth': Level,
+                        'parent': word,
+                        'edits': match['edits'],
+                        'words': match['words']
                     })
-                else:
-                    words = self.db.dictionary.find({}, {
-                            '_id': False,
-                            'word': True
-                    })
+                    closestMatch.append(frontier[-1])
 
-                for wordDic in words:
-
-                    # Calcuate minimum edit distance of one Level
-                    word = wordDic['word']
-                    editDistance = LD.compute(parent['word'], word)
-                    minLD = min(minLD, editDistance)
-
-                    if(not matches.has_key(editDistance)):
-                        matches[editDistance] = []
-                    matches[editDistance].append(word)
-
-                if minLD != 1000:
-                    closestMatch.append({'words': matches[minLD], 'graphDepth': level, 'edits': minLD, 'parent': parent['word']})
-
-                    # Add exception and frontiers with best matches
-                    for x in matches[minLD]:
-                        exceptions.append(x)
-                        frontier.append({'word': x, 'edits': editDistance})
-            parents = frontier
-            level = level + 1
+            Level = Level + 1
+            parent = frontier
         return closestMatch
 
     '''
